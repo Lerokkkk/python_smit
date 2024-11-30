@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "python-smit"
+version = "0.1.0"
+description = "python middle developer test task"
+authors = ["Lerokkkk <vailyinykh@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+sqlalchemy = "^2.0.36"
+pydantic-settings = "^2.6.1"
+asyncpg = "^0.30.0"
+fastapi = {extras = ["all"], version = "^0.115.5"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
