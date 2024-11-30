@@ -5,7 +5,7 @@ from infra.repositories.models.rate import RateModel
 def convert_rate_to_dict(rate_entity: RateEntity):
     return {
         "cargo_type": rate_entity.cargo_type,
-        "rate_service": rate_entity.rate,
+        "rate": rate_entity.rate,
         "date": rate_entity.date
     }
 

@@ -1,32 +1,35 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from app.domain.entites.rate import RateEntity
 from domain.entites.rate_filters import RateFiltersEntity
 from domain.entites.rate_update import RateUpdateEntity
+
+from app.domain.entites.rate import RateEntity
 
 
 @dataclass
 class BaseRateRepository(ABC):
     @abstractmethod
     def add_rates(self, rates: list[RateEntity]):
-        """Добавляет один или несколько тарифов"""
-        ...
-
-    @abstractmethod
-    def get_rate_by_id(self, rate_id: int):
-        """Получает тариф по идентификатору"""
+        """Добавить тарифы"""
         ...
 
     @abstractmethod
     def get_rates_by_filters(self, filters: RateFiltersEntity):
+        """Получить тарифы по фильтрам"""
         ...
 
     @abstractmethod
-    def update_rate(self, update_fields: RateUpdateEntity):
-        """Обновить тариф по идентификатору"""
+    def get_all_rates(self) -> list[RateEntity]:
+        """Получить все тарифы"""
         ...
 
     @abstractmethod
-    def delete_rate(self, rate_id: int):
+    def update_rates(self, rates: list[RateEntity]):
+        """Обновить тарифы"""
+        ...
+
+    @abstractmethod
+    def delete_rates(self, rates: list[RateEntity]):
+        """Удалить тарифы"""
         ...

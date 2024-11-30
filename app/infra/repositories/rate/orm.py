@@ -1,23 +1,17 @@
-import datetime
+import asyncio
 from dataclasses import fields
+from datetime import date
 
-from fastapi import Depends
-from sqlalchemy import and_, select
-
+from sqlalchemy import and_, select, update, bindparam, delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.entites.rate import RateEntity
+from app.infra.repositories.rate.base import BaseRateRepository
 from domain.entites.rate_filters import RateFiltersEntity
-from domain.entites.rate_update import RateUpdateEntity
-from domain.exceptions.base import ApplicationException
-from infra.repositories.exceptions.rate import RateNotFoundException
-from infra.repositories.models.db import get_db
+from infra.repositories.models.db import async_session
 from infra.repositories.models.rate import RateModel
 from infra.repositories.rate.conventers import convert_rate_to_dict, convert_rate_model_to_entity
-
-from app.domain.entites.rate import RateEntity
-
-from app.infra.repositories.rate.base import BaseRateRepository
 
 
 class ORMRateRepository(BaseRateRepository):
@@ -36,6 +30,7 @@ class ORMRateRepository(BaseRateRepository):
 
     async def add_rates(self, rates: list[RateEntity]) -> list[RateEntity]:
         rates_to_add = [convert_rate_to_dict(obj) for obj in rates]
+        print(rates_to_add)
         stmt = insert(RateModel).values(rates_to_add).returning(RateModel)
 
         result = await self.session.scalars(stmt)
@@ -44,11 +39,9 @@ class ORMRateRepository(BaseRateRepository):
         await self.session.commit()
         return response
 
-    async def get_rate_by_id(self, rate_id: int) -> RateEntity:
-        rate_model = await self.session.get(RateModel, rate_id)
-        if not rate_model:
-            raise RateNotFoundException(rate_id)
-        return convert_rate_model_to_entity(rate_model)
+    async def get_all_rates(self) -> list[RateEntity]:
+        result = await self.session.execute(select(RateModel))
+        return [convert_rate_model_to_entity(obj) for obj in result.scalars().all()]
 
     async def get_rates_by_filters(self, filters: RateFiltersEntity) -> list[RateEntity]:
         built_filters = self._query_builder(filters)
@@ -59,25 +52,55 @@ class ORMRateRepository(BaseRateRepository):
         rates = result.scalars().all()
         return [convert_rate_model_to_entity(obj) for obj in rates]
 
-    async def update_rate(self, update_fields: RateUpdateEntity) -> RateEntity:
-        rate_model = await self.session.get(RateModel, update_fields.id)
-        if not rate_model:
-            raise RateNotFoundException(update_fields.id)
+    async def update_rates(self, rates: list[RateEntity]) -> str:
+        data_for_update = [
+            {
+                "b_date": rate.date,
+                "b_cargo_type": rate.cargo_type,
+                "rate": rate.rate
+            }
+            for rate in rates
+        ]
+        async with self.session.begin():
+            connection = await self.session.connection()
+            stmt = (
+                update(RateModel).where(RateModel.date == bindparam("b_date"),
+                                        RateModel.cargo_type == bindparam("b_cargo_type"))
+            )
+            await connection.execute(stmt, data_for_update)
+            await self.session.commit()
+        return "Success"
 
-        for field in fields(update_fields):
-            if getattr(update_fields, field.name) is not None and field.name != 'id':
-                value = getattr(update_fields, field.name)
-                setattr(rate_model, field.name, value)
+    async def delete_rates(self, rates: list[RateEntity]) -> str:
+        data_for_update = [
+            {
+                "b_date": rate.date,
+                "b_cargo_type": rate.cargo_type,
+                "rate": rate.rate
+            }
+            for rate in rates
+        ]
+        async with self.session.begin():
+            connection = await self.session.connection()
+            stmt = (
+                delete(RateModel).where(RateModel.date == bindparam("b_date"),
+                                        RateModel.cargo_type == bindparam("b_cargo_type"))
+            )
+            await connection.execute(stmt, data_for_update)
+            await self.session.commit()
+        return "Success"
 
-        await self.session.commit()
-        return convert_rate_model_to_entity(rate_model)
 
-    async def delete_rate(self, rate_id: int) -> RateEntity:
-        rate_model = await self.session.get(RateModel, rate_id)
-        if not rate_model:
-            raise RateNotFoundException(rate_id)
+async def main():
+    rates = [
+        RateModel(date=date(2024, 1, 6), cargo_type="Glass", rate=0.047),
+        # RateModel(date=date(2024, 1, 6), cargo_type="Other", rate=0.01),
+        # RateModel(date=date(2024, 1, 7), cargo_type="Glass", rate=0.035),
+        RateModel(date=date(2024, 1, 7), cargo_type="Other", rate=0.022),
+    ]
+    async with async_session() as session:
+        r = ORMRateRepository(session=session)
+        response = await r.delete_rates(rates)
+        print(response)
 
-        await self.session.delete(rate_model)
-        await self.session.commit()
-
-        return convert_rate_model_to_entity(rate_model)
+asyncio.run(main())
