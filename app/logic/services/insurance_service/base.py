@@ -5,7 +5,7 @@ from domain.value_objects.insurance_params import InsuranceParams
 
 
 @dataclass
-class BaseAsyncInsuranceService(ABC):
+class BaseInsuranceService(ABC):
     @abstractmethod
-    def calculate_insurance_cost(self, insurance_parameters: InsuranceParams) -> float:
+    async def calculate_insurance_cost(self, insurance_parameters: InsuranceParams) -> float:
         ...

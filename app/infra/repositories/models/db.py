@@ -3,11 +3,11 @@ from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from app.infra.repositories.models.rate import Base
-from app.settings.config import config
+from infra.repositories.models.rate import Base
+from settings.config import config
 
 engine = create_async_engine(
-    f"postgresql+asyncpg://{config.db_user}:{config.db_password}@localhost:{config.db_port}/{config.db_name}"
+    f"postgresql+asyncpg://{config.db_user}:{config.db_password}@{config.db_host}:{config.outside_port}/{config.db_name}"
 )
 
 async_session = async_sessionmaker(engine, class_=AsyncSession)

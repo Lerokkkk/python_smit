@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from app.domain.entites.rate import RateEntity
+from domain.entites.rate import RateEntity
 from domain.entites.rate_filters import RateFiltersEntity
 
 
 @dataclass
-class BaseAsyncRateRepository(ABC):
+class BaseRateRepository(ABC):
 
     @abstractmethod
     async def get_actual_rate(self, filters: RateFiltersEntity) -> RateEntity:

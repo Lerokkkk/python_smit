@@ -3,7 +3,7 @@ import datetime
 
 
 @dataclass(eq=False)
-class RateEntity:
+class   RateEntity:
     cargo_type: str
     rate: float
     date: datetime.date

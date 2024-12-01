@@ -5,7 +5,7 @@ from domain.entites.log import LogEntity
 
 
 @dataclass
-class BaseAsyncLoggerService(ABC):
+class BaseLoggerService(ABC):
 
     @abstractmethod
     async def send_logs(self, log: LogEntity):

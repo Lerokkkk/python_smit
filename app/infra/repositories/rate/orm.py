@@ -1,22 +1,21 @@
-import asyncio
 from dataclasses import fields
-from datetime import date
 
+from asyncpg import UniqueViolationError
 from sqlalchemy import and_, select, update, bindparam, delete
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.entites.rate import RateEntity
-from app.infra.repositories.rate.base import BaseAsyncRateRepository
+from domain.entites.rate import RateEntity
 from domain.entites.rate_filters import RateFiltersEntity
-from infra.repositories.exceptions.rate import RateNotFoundException
-from infra.repositories.models.db import async_session
+from infra.repositories.exceptions.rate import RateNotFoundException, UniqueRatesException
 from infra.repositories.models.rate import RateModel
+from infra.repositories.rate.base import BaseRateRepository
 from infra.repositories.rate.conventers import convert_rate_to_dict, convert_rate_model_to_entity
 
 
-class ORMRateRepository(BaseAsyncRateRepository):
-    def __init__(self, session: AsyncSession):
+class ORMRateRepository(BaseRateRepository):
+    def __init__(self, session: AsyncSession | None):
 
         self.session = session
 
@@ -31,14 +30,18 @@ class ORMRateRepository(BaseAsyncRateRepository):
 
     async def add_rates(self, rates: list[RateEntity]) -> list[RateEntity]:
         rates_to_add = [convert_rate_to_dict(obj) for obj in rates]
-        print(rates_to_add)
-        stmt = insert(RateModel).values(rates_to_add).returning(RateModel)
 
-        result = await self.session.scalars(stmt)
-        rates_from_db = result.all()
-        response = [convert_rate_model_to_entity(obj) for obj in rates_from_db]
-        await self.session.commit()
-        return response
+        try:
+            stmt = insert(RateModel).values(rates_to_add).returning(RateModel)
+
+            result = await self.session.scalars(stmt)
+            rates_from_db = result.all()
+            response = [convert_rate_model_to_entity(obj) for obj in rates_from_db]
+            await self.session.commit()
+            return response
+        except (IntegrityError, UniqueViolationError) as e:
+            await self.session.rollback()
+            raise UniqueRatesException()
 
     async def get_all_rates(self) -> list[RateEntity]:
         result = await self.session.execute(select(RateModel))
@@ -106,16 +109,16 @@ class ORMRateRepository(BaseAsyncRateRepository):
         return convert_rate_model_to_entity(response)
 
 
-async def main():
-    rates = [
-        RateModel(date=date(2024, 6, 1), cargo_type="Glass", rate=0.047),
-        RateModel(date=date(2024, 6, 1), cargo_type="Other", rate=0.01),
-        RateModel(date=date(2024, 7, 1), cargo_type="Glass", rate=0.035),
-        RateModel(date=date(2024, 7, 1), cargo_type="Other", rate=0.022),
-    ]
-    async with async_session() as session:
-        r = ORMRateRepository(session=session)
-        response = await r.add_rates(rates)
-        print(response)
+# async def main():
+#     rates = [
+#         RateModel(date=date(2024, 6, 1), cargo_type="Glass", rate=0.047),
+#         RateModel(date=date(2024, 6, 1), cargo_type="Other", rate=0.01),
+#         RateModel(date=date(2024, 7, 1), cargo_type="Glass", rate=0.035),
+#         RateModel(date=date(2024, 7, 1), cargo_type="Other", rate=0.022),
+#     ]
+#     async with async_session() as session:
+#         r = ORMRateRepository(session=session)
+#         response = await r.add_rates(rates)
+#         print(response)
 
 

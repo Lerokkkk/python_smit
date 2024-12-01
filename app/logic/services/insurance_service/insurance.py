@@ -2,13 +2,13 @@ from dataclasses import dataclass
 
 from domain.entites.rate_filters import RateFiltersEntity
 from domain.value_objects.insurance_params import InsuranceParams
-from infra.repositories.rate.base import BaseAsyncRateRepository
-from logic.services.insurance_service.base import BaseAsyncInsuranceService
+from infra.repositories.rate.base import BaseRateRepository
+from logic.services.insurance_service.base import BaseInsuranceService
 
 
 @dataclass
-class InsuranceService(BaseAsyncInsuranceService):
-    repository: BaseAsyncRateRepository
+class InsuranceService(BaseInsuranceService):
+    repository: BaseRateRepository
 
     async def calculate_insurance_cost(self, insurance_parameters: InsuranceParams) -> float:
         filters = RateFiltersEntity(cargo_type=insurance_parameters.cargo_type,

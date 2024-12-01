@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     db_password: str
     db_host: str
     db_port: str
+    outside_port: str = "5432"
 
 
 config = Settings()
