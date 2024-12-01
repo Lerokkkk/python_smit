@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 from domain.entites.rate import RateEntity
 from domain.entites.rate_filters import RateFiltersEntity
-from domain.entites.rate_update import RateUpdateEntity
 
 
 class BaseRateService(ABC):
@@ -11,7 +10,7 @@ class BaseRateService(ABC):
         ...
 
     @abstractmethod
-    def get_rate_by_id(self, rate_id: int) -> RateEntity:
+    def get_all_rates(self) -> list[RateEntity]:
         ...
 
     @abstractmethod
@@ -19,11 +18,9 @@ class BaseRateService(ABC):
         ...
 
     @abstractmethod
-    def update_rate(self, update_fields: RateUpdateEntity) -> RateEntity:
+    def update_rates(self, rates: list[RateEntity]) -> str:
         ...
 
     @abstractmethod
-    def delete_rate(self, rate_id: int) -> RateEntity:
+    def delete_rates(self, rates: list[RateEntity]) -> str:
         ...
-
-

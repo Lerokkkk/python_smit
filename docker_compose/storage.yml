@@ -4,7 +4,7 @@ services:
     image: postgres:17
     container_name: my_postgres_container
     env_file:
-      - .env
+      - ../.env
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -14,13 +14,13 @@ services:
     ports:
       - "${DB_PORT}:5432"
     networks:
-      - "backend-network"
+      - backend
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
 
 networks:
-  backend-network:
+  backend:
     driver: bridge
 
 volumes:

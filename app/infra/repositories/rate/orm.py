@@ -7,14 +7,15 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entites.rate import RateEntity
-from app.infra.repositories.rate.base import BaseRateRepository
+from app.infra.repositories.rate.base import BaseAsyncRateRepository
 from domain.entites.rate_filters import RateFiltersEntity
+from infra.repositories.exceptions.rate import RateNotFoundException
 from infra.repositories.models.db import async_session
 from infra.repositories.models.rate import RateModel
 from infra.repositories.rate.conventers import convert_rate_to_dict, convert_rate_model_to_entity
 
 
-class ORMRateRepository(BaseRateRepository):
+class ORMRateRepository(BaseAsyncRateRepository):
     def __init__(self, session: AsyncSession):
 
         self.session = session
@@ -90,17 +91,31 @@ class ORMRateRepository(BaseRateRepository):
             await self.session.commit()
         return "Success"
 
+    async def get_actual_rate(self, filters: RateFiltersEntity) -> RateEntity:
+        query = (select(RateModel).filter(
+            RateModel.cargo_type == filters.cargo_type,
+            RateModel.date <= filters.date
+        )
+                 .order_by(RateModel.date.desc())
+                 .limit(1)
+                 )
+        result = await self.session.execute(query)
+        response = result.scalar_one_or_none()
+        if not response:
+            raise RateNotFoundException()
+        return convert_rate_model_to_entity(response)
+
 
 async def main():
     rates = [
-        RateModel(date=date(2024, 1, 6), cargo_type="Glass", rate=0.047),
-        # RateModel(date=date(2024, 1, 6), cargo_type="Other", rate=0.01),
-        # RateModel(date=date(2024, 1, 7), cargo_type="Glass", rate=0.035),
-        RateModel(date=date(2024, 1, 7), cargo_type="Other", rate=0.022),
+        RateModel(date=date(2024, 6, 1), cargo_type="Glass", rate=0.047),
+        RateModel(date=date(2024, 6, 1), cargo_type="Other", rate=0.01),
+        RateModel(date=date(2024, 7, 1), cargo_type="Glass", rate=0.035),
+        RateModel(date=date(2024, 7, 1), cargo_type="Other", rate=0.022),
     ]
     async with async_session() as session:
         r = ORMRateRepository(session=session)
-        response = await r.delete_rates(rates)
+        response = await r.add_rates(rates)
         print(response)
 
-asyncio.run(main())
+
