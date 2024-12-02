@@ -19,6 +19,6 @@ class KafkaLoggingService(BaseLoggerService):
         serialized_message = json.dumps(message).encode("utf-8")
 
         try:
-            await self.producer.send(topic='my-topic', value=serialized_message)
+            await self.producer.send(topic='message-topic', value=serialized_message)
         except Exception as e:
             raise e
