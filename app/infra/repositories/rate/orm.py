@@ -76,7 +76,7 @@ class ORMRateRepository(BaseRateRepository):
         return "Success"
 
     async def delete_rates(self, rates: list[RateEntity]) -> str:
-        data_for_update = [
+        data_for_delete = [
             {
                 "b_date": rate.date,
                 "b_cargo_type": rate.cargo_type,
@@ -90,7 +90,7 @@ class ORMRateRepository(BaseRateRepository):
                 delete(RateModel).where(RateModel.date == bindparam("b_date"),
                                         RateModel.cargo_type == bindparam("b_cargo_type"))
             )
-            await connection.execute(stmt, data_for_update)
+            await connection.execute(stmt, data_for_delete)
             await self.session.commit()
         return "Success"
 
@@ -107,18 +107,3 @@ class ORMRateRepository(BaseRateRepository):
         if not response:
             raise RateNotFoundException()
         return convert_rate_model_to_entity(response)
-
-
-# async def main():
-#     rates = [
-#         RateModel(date=date(2024, 6, 1), cargo_type="Glass", rate=0.047),
-#         RateModel(date=date(2024, 6, 1), cargo_type="Other", rate=0.01),
-#         RateModel(date=date(2024, 7, 1), cargo_type="Glass", rate=0.035),
-#         RateModel(date=date(2024, 7, 1), cargo_type="Other", rate=0.022),
-#     ]
-#     async with async_session() as session:
-#         r = ORMRateRepository(session=session)
-#         response = await r.add_rates(rates)
-#         print(response)
-
-
